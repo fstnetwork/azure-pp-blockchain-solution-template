@@ -1,0 +1,123 @@
+version: "3"
+
+services:
+  bootnode:
+    image: fstnetwork/bootnode-registrar:node
+    expose:
+      - "3000"
+    restart: always
+    networks:
+      - overall
+
+  miner1:
+    image: fstnetwork/azure-ethereum-service:preview
+    ports:
+      - "8545:8545"
+    expose:
+      - "30303"
+      - "8545"
+      - "8546"
+    networks:
+      - overall
+    environment:
+      - NETWORK_NAME=Parity-Aura
+      - NODE_TYPE=Miner
+      - SEALER_MASTER_SEED=rose rocket invest real refuse margin festival danger anger border idle brown
+      - MINER_INDEX=0
+      - MINER_COUNT=3
+      - CONSENSUS_ENGINE=aura
+      - AURA_CONSENSUS_PARAMETERS={"blockPeriod":5}
+      - GENESIS_BLOCK_GAS_LIMIT=0x6422c40
+      - P2P_NETWORK_SERVICE_PORT=30303
+      - HTTP_JSON_RPC_PORT=8545
+      - WEBSOCKET_JSON_RPC_PORT=8546
+      - BOOTNODE_SERVICE_HOST=bootnode
+      - BOOTNODE_SERVICE_PORT=3000
+      - RUST_BACKTRACE=1
+    restart: always
+    depends_on:
+      - bootnode
+
+  miner2:
+    image: fstnetwork/azure-ethereum-service:preview
+    expose:
+      - "30303"
+      - "8545"
+      - "8546"
+    networks:
+      - overall
+    environment:
+      - NETWORK_NAME=Parity-Aura
+      - NODE_TYPE=Miner
+      - SEALER_MASTER_SEED=rose rocket invest real refuse margin festival danger anger border idle brown
+      - MINER_INDEX=1
+      - MINER_COUNT=3
+      - CONSENSUS_ENGINE=aura
+      - AURA_CONSENSUS_PARAMETERS={"blockPeriod":5}
+      - GENESIS_BLOCK_GAS_LIMIT=0x6422c40
+      - P2P_NETWORK_SERVICE_PORT=30303
+      - HTTP_JSON_RPC_PORT=8545
+      - WEBSOCKET_JSON_RPC_PORT=8546
+      - BOOTNODE_SERVICE_HOST=bootnode
+      - BOOTNODE_SERVICE_PORT=3000
+      - RUST_BACKTRACE=1
+    restart: always
+    depends_on:
+      - bootnode
+
+  miner3:
+    image: fstnetwork/azure-ethereum-service:preview
+    expose:
+      - "30303"
+      - "8545"
+      - "8546"
+    networks:
+      - overall
+    environment:
+      - NETWORK_NAME=Parity-Aura
+      - NODE_TYPE=Miner
+      - SEALER_MASTER_SEED=rose rocket invest real refuse margin festival danger anger border idle brown
+      - MINER_INDEX=2
+      - MINER_COUNT=3
+      - CONSENSUS_ENGINE=aura
+      - AURA_CONSENSUS_PARAMETERS={"blockPeriod":5}
+      - GENESIS_BLOCK_GAS_LIMIT=0x6422c40
+      - P2P_NETWORK_SERVICE_PORT=30303
+      - HTTP_JSON_RPC_PORT=8545
+      - WEBSOCKET_JSON_RPC_PORT=8546
+      - BOOTNODE_SERVICE_HOST=bootnode
+      - BOOTNODE_SERVICE_PORT=3000
+      - RUST_BACKTRACE=1
+    restart: always
+    depends_on:
+      - bootnode
+
+  transactor-1:
+    image: fstnetwork/azure-ethereum-service:preview
+    expose:
+      - "30303"
+      - "8545"
+      - "8546"
+    networks:
+      - overall
+    environment:
+      - NETWORK_NAME=Parity-Aura
+      - NODE_TYPE=Transactor
+      - SEALER_MASTER_SEED=rose rocket invest real refuse margin festival danger anger border idle brown
+      - MINER_COUNT=3
+      - CONSENSUS_ENGINE=Aura
+      - AURA_CONSENSUS_PARAMETERS={"blockPeriod":5}
+      - GENESIS_BLOCK_GAS_LIMIT=0x6422c40
+      - P2P_NETWORK_SERVICE_PORT=30303
+      - HTTP_JSON_RPC_PORT=8545
+      - WEBSOCKET_JSON_RPC_PORT=8546
+      - BOOTNODE_SERVICE_HOST=bootnode
+      - BOOTNODE_SERVICE_PORT=3000
+      - RUST_BACKTRACE=1
+    restart: always
+    depends_on:
+      - bootnode
+
+networks:
+  overall:
+    driver: bridge

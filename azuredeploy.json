@@ -1,0 +1,367 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "networkName": {
+            "type": "string",
+            "defaultValue": "EthereumNetwork",
+            "metadata": {
+                "description": "The name of this blockchain network"
+            }
+        },
+        "sealerMasterSeed": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The master seed of miners' private keys"
+            }
+        },
+        "minerCount": {
+            "type": "int",
+            "defaultValue": 3,
+            "minValue": 1,
+            "maxValue": 20,
+            "metadata": {
+                "description": "The number of miner nodes"
+            }
+        },
+        "transactorCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "minValue": 0,
+            "maxValue": 20,
+            "metadata": {
+                "description": "The number of transactor nodes"
+            }
+        },
+        "consensusEngine": {
+            "type": "string",
+            "defaultValue": "Aura",
+            "allowedValues": ["Ethash", "Aura", "Clique"],
+            "metadata": {
+                "description": "Type of consensus engine, availible consensus engines: Ethash (Proof-of-Work), Aura (Proof-of-Authority), Clique (Proof-of-Authority)"
+            }
+        },
+        "ethashConsensusParameters": {
+            "type": "object",
+            "defaultValue": {
+                "genesisBlockDifficulty": {
+                    "type": "int",
+                    "minValue": 16384
+                }
+            }
+        },
+        "auraConsensusParameters": {
+            "type": "object",
+            "defaultValue": {
+                "blockPeriod": "5",
+                "blockReward": "5000000000000000000"
+            },
+            "metadata": {
+                "description": "Parameters of Parity Aura consensus engine"
+            }
+        },
+        "cliqueConsensusParameters": {
+            "type": "object",
+            "defaultValue": {
+                "blockPeriod": "10"
+            },
+            "metadata": {
+                "description": "Parameters of Go-Ethereum Clique consensus engine"
+            }
+        },
+        "genesisBlockGasLimits": {
+            "type": "string",
+            "defaultValue": "0x6422c40"
+        },
+        "ethereumServiceImage": {
+            "type": "string",
+            "defaultValue": "fstnetwork/azure-ethereum-service:preview",
+            "metadata": {
+                "description": "Ethereum Service Docker image"
+            }
+        },
+        "p2pNetworkPort": {
+            "type": "int",
+            "defaultValue": 30303,
+            "minValue": 2000,
+            "maxValue": 65535,
+            "metadata": {
+                "description": "P2P Network service port number"
+            }
+        },
+        "httpJsonRpcPort": {
+            "type": "int",
+            "defaultValue": 8545,
+            "minValue": 2000,
+            "maxValue": 65535,
+            "metadata": {
+                "description": "HTTP JSON-RPC service port number"
+            }
+        },
+        "websocketJsonRpcPort": {
+            "type": "int",
+            "defaultValue": 8546,
+            "minValue": 2000,
+            "maxValue": 65535,
+            "metadata": {
+                "description": "WebSocket JSON-RPC service port number"
+            }
+        },
+        "minerCpuCores": {
+            "type": "string",
+            "metadata": {
+                "description": "The number of CPU cores to allocate to the Miner Service container. Must be an integer."
+            },
+            "defaultValue": "1.0"
+        },
+        "minerMemoryInGb": {
+            "type": "string",
+            "metadata": {
+                "description": "The amount of memory to allocate to the Miner Service container in gigabytes."
+            },
+            "defaultValue": "1.5"
+        },
+        "bootnodeServiceImage": {
+            "type": "string",
+            "defaultValue": "fstnetwork/bootnode-registrar:node",
+            "metadata": {
+                "description": "P2P Network Bootstrapping Service Docker image"
+            }
+        },
+        "bootnodeServicePort": {
+            "type": "int",
+            "defaultValue": 3000,
+            "minValue": 2000,
+            "maxValue": 65535,
+            "metadata": {
+                "description": "Bootnode service port number"
+            }
+        }
+    },
+    "variables": {
+        "bootnodeServiceContainerGroupRef": "[resourceId('Microsoft.ContainerInstance/containerGroups/','bootnodeService')]"
+    },
+    "resources": [{
+        "name": "bootnodeService",
+        "type": "Microsoft.ContainerInstance/containerGroups",
+        "apiVersion": "2018-10-01",
+        "location": "[parameters('location')]",
+        "dependsOn": [],
+        "properties": {
+            "containers": [{
+                "name": "bootnode-service",
+                "properties": {
+                    "image": "[parameters('bootnodeServiceImage')]",
+                    "ports": [{
+                        "port": "[parameters('bootnodeServicePort')]",
+                        "protocol": "TCP"
+                    }],
+                    "resources": {
+                        "requests": {
+                            "cpu": 1.0,
+                            "memoryInGB": 1.0
+                        }
+                    }
+                }
+            }],
+            "osType": "Linux",
+            "ipAddress": {
+                "type": "Public",
+                "ports": [{
+                    "protocol": "tcp",
+                    "port": "[parameters('bootnodeServicePort')]"
+                }]
+            },
+            "restartPolicy": "Always"
+        }
+    }, {
+        "name": "[concat('EthereumMinerService-', copyIndex())]",
+        "type": "Microsoft.ContainerInstance/containerGroups",
+        "apiVersion": "2018-10-01",
+        "location": "[parameters('location')]",
+        "dependsOn": ["bootnodeService"],
+        "copy": {
+            "name": "minerContainerLoop",
+            "count": "[parameters('minerCount')]"
+        },
+        "properties": {
+            "containers": [{
+                "name": "[concat('miner-', copyIndex())]",
+                "properties": {
+                    "image": "[parameters('ethereumServiceImage')]",
+                    "ports": [{
+                        "port": "[parameters('p2pNetworkPort')]",
+                        "protocol": "TCP"
+                    }, {
+                        "port": "[parameters('httpJsonRpcPort')]",
+                        "protocol": "TCP"
+                    }, {
+                        "port": "[parameters('websocketJsonRpcPort')]",
+                        "protocol": "TCP"
+                    }],
+                    "environmentVariables": [{
+                        "name": "NODE_TYPE",
+                        "value": "miner"
+                    }, {
+                        "name": "SEALER_MASTER_SEED",
+                        "value": "[parameters('sealerMasterSeed')]"
+                    }, {
+                        "name": "NETWORK_NAME",
+                        "value": "[parameters('networkName')]"
+                    }, {
+                        "name": "CONSENSUS_ENGINE",
+                        "value": "[parameters('consensusEngine')]"
+                    }, {
+                        "name": "AURA_CONSENSUS_PARAMETERS",
+                        "value": "[string(parameters('auraConsensusParameters'))]"
+                    }, {
+                        "name": "MINER_COUNT",
+                        "value": "[parameters('minerCount')]"
+                    }, {
+                        "name": "MINER_INDEX",
+                        "value": "[copyIndex()]"
+                    }, {
+                        "name": "GENESIS_BLOCK_GAS_LIMIT",
+                        "value": "[parameters('genesisBlockGasLimits')]"
+                    }, {
+                        "name": "P2P_NETWORK_SERVICE_PORT",
+                        "value": "[parameters('p2pNetworkPort')]"
+                    }, {
+                        "name": "HTTP_JSON_RPC_PORT",
+                        "value": "[parameters('httpJsonRpcPort')]"
+                    }, {
+                        "name": "WEBSOCKET_JSON_RPC_PORT",
+                        "value": "[parameters('websocketJsonRpcPort')]"
+                    }, {
+                        "name": "BOOTNODE_SERVICE_HOST",
+                        "value": "[reference(variables('bootnodeServiceContainerGroupRef')).ipAddress.ip]"
+                    }, {
+                        "name": "BOOTNODE_SERVICE_PORT",
+                        "value": "[parameters('bootnodeServicePort')]"
+                    }],
+                    "resources": {
+                        "requests": {
+                            "cpu": "[parameters('minerCpuCores')]",
+                            "memoryInGb": "[parameters('minerMemoryInGb')]"
+                        }
+                    }
+                }
+            }],
+            "osType": "Linux",
+            "ipAddress": {
+                "type": "Public",
+                "ports": [{
+                    "port": "[parameters('p2pNetworkPort')]",
+                    "protocol": "TCP"
+                }, {
+                    "port": "[parameters('httpJsonRpcPort')]",
+                    "protocol": "TCP"
+                }, {
+                    "port": "[parameters('websocketJsonRpcPort')]",
+                    "protocol": "TCP"
+                }]
+            }
+        }
+    }, {
+        "name": "[concat('EthereumTransactorService-', copyIndex())]",
+        "type": "Microsoft.ContainerInstance/containerGroups",
+        "apiVersion": "2018-10-01",
+        "location": "[parameters('location')]",
+        "dependsOn": ["bootnodeService"],
+        "copy": {
+            "name": "transactorContainerLoop",
+            "count": "[parameters('transactorCount')]"
+        },
+        "properties": {
+            "containers": [{
+                "name": "[concat('transactor-', copyIndex())]",
+                "properties": {
+                    "image": "[parameters('ethereumServiceImage')]",
+                    "ports": [{
+                        "port": "[parameters('p2pNetworkPort')]",
+                        "protocol": "TCP"
+                    }, {
+                        "port": "[parameters('httpJsonRpcPort')]",
+                        "protocol": "TCP"
+                    }, {
+                        "port": "[parameters('websocketJsonRpcPort')]",
+                        "protocol": "TCP"
+                    }],
+                    "environmentVariables": [{
+                        "name": "NODE_TYPE",
+                        "value": "transactor"
+                    }, {
+                        "name": "NETWORK_NAME",
+                        "value": "[parameters('networkName')]"
+                    }, {
+                        "name": "SEALER_MASTER_SEED",
+                        "value": "[parameters('sealerMasterSeed')]"
+                    }, {
+                        "name": "CONSENSUS_ENGINE",
+                        "value": "[parameters('consensusEngine')]"
+                    }, {
+                        "name": "AURA_CONSENSUS_PARAMETERS",
+                        "value": "[string(parameters('auraConsensusParameters'))]"
+                    }, {
+                        "name": "MINER_COUNT",
+                        "value": "[parameters('minerCount')]"
+                    }, {
+                        "name": "TRANSACTOR_INDEX",
+                        "value": "[copyIndex()]"
+                    }, {
+                        "name": "GENESIS_BLOCK_GAS_LIMIT",
+                        "value": "[parameters('genesisBlockGasLimits')]"
+                    }, {
+                        "name": "P2P_NETWORK_SERVICE_PORT",
+                        "value": "[parameters('p2pNetworkPort')]"
+                    }, {
+                        "name": "HTTP_JSON_RPC_PORT",
+                        "value": "[parameters('httpJsonRpcPort')]"
+                    }, {
+                        "name": "WEBSOCKET_JSON_RPC_PORT",
+                        "value": "[parameters('websocketJsonRpcPort')]"
+                    }, {
+                        "name": "BOOTNODE_SERVICE_HOST",
+                        "value": "[reference(variables('bootnodeServiceContainerGroupRef')).ipAddress.ip]"
+                    }, {
+                        "name": "BOOTNODE_SERVICE_PORT",
+                        "value": "[parameters('bootnodeServicePort')]"
+                    }],
+                    "resources": {
+                        "requests": {
+                            "cpu": "[parameters('minerCpuCores')]",
+                            "memoryInGb": "[parameters('minerMemoryInGb')]"
+                        }
+                    }
+                }
+            }],
+            "osType": "Linux",
+            "ipAddress": {
+                "type": "Public",
+                "ports": [{
+                    "port": "[parameters('p2pNetworkPort')]",
+                    "protocol": "TCP"
+                }, {
+                    "port": "[parameters('httpJsonRpcPort')]",
+                    "protocol": "TCP"
+                }, {
+                    "port": "[parameters('websocketJsonRpcPort')]",
+                    "protocol": "TCP"
+                }]
+            }
+        }
+    }],
+    "outputs": {
+        "BootnodeServiceUrl": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/','bootnodeService')).ipAddress.ip]"
+        }
+    }
+}

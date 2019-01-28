@@ -1,0 +1,66 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "networkName": {
+            "value": "EthereumNetwork"
+        },
+        "sealerMasterSeed": {
+            "value": "rose rocket invest real refuse margin festival danger anger border idle brown"
+        },
+        "minerCount": {
+            "value": 3
+        },
+        "transactorCount": {
+            "value": 1
+        },
+        "genesisBlockGasLimits": {
+            "value": "0x6422c40"
+        },
+        "consensusEngine": {
+            "value": "Aura"
+        },
+        "ethashConsensusParameters": {
+            "value": {
+                "genesisBlockDifficulty": {
+                    "minValue": 16384
+                }
+            }
+        },
+        "auraConsensusParameters": {
+            "value": {
+                "blockPeriod": "5",
+                "blockReward": "5000000000000000000"
+            }
+        },
+        "cliqueConsensusParameters": {
+            "value": {
+                "blockPeriod": "10"
+            }
+        },
+        "ethereumServiceImage": {
+            "value": "fstnetwork/azure-ethereum-service:preview"
+        },
+        "p2pNetworkPort": {
+            "value": 30303
+        },
+        "httpJsonRpcPort": {
+            "value": 8545
+        },
+        "websocketJsonRpcPort": {
+            "value": 8546
+        },
+        "minerCpuCores": {
+            "value": "1.0"
+        },
+        "minerMemoryInGb": {
+            "value": "1.5"
+        },
+        "bootnodeServiceImage": {
+            "value": "fstnetwork/bootnode-registrar:preview"
+        },
+        "bootnodeServicePort": {
+            "value": 3000
+        }
+    }
+}
