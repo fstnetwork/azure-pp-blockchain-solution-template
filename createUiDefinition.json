@@ -1,0 +1,260 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Compute.MultiVm",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "networkName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Blockchain Network Name",
+        "toolTip": "The name of this blockchain network",
+        "defaultValue": "EthereumNetwork",
+        "constraints": {
+          "required": true
+        }
+      }
+    ],
+    "steps": [
+      {
+        "name": "BlockchainNetworkConfig",
+        "label": "Blockchain Network Settings",
+        "subLabel": {
+          "preValidation": "Configure the blockchain network's resources and settings",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Blockchain Network Settings",
+        "elements": [
+          {
+            "name": "networkConsensus",
+            "type": "Microsoft.Common.Section",
+            "label": "Network Consensus",
+            "elements": [
+              {
+                "name": "consensusEngine",
+                "type": "Microsoft.Common.OptionsGroup",
+                "label": "Consensus Engine",
+                "defaultValue": "Aura (Proof-of-Authority)",
+                "toolTip": "Type of consensus engine, availible consensus engines: Ethash (Proof-of-Work), Aura (Proof-of-Authority), Clique (Proof-of-Authority)",
+                "constraints": {
+                  "allowedValues": [
+                    {
+                      "label": "Ethash (Proof-of-Work)",
+                      "value": "Ethash"
+                    },
+                    {
+                      "label": "Aura (Proof-of-Authority)",
+                      "value": "Aura"
+                    },
+                    {
+                      "label": "Clique (Proof-of-Authority)",
+                      "value": "Clique"
+                    }
+                  ],
+                  "required": true
+                },
+                "visible": true
+              },
+              {
+                "name": "sealerMasterSeed",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                  "password": "Master seed",
+                  "confirmPassword": "Confirm master seed"
+                },
+                "toolTip": "The master seed of miners' private keys",
+                "constraints": {
+                  "required": true,
+                  "regex": "",
+                  "validationMessage": ""
+                },
+                "options": {
+                  "hideConfirmation": false
+                },
+                "visible": true
+              }
+            ],
+            "visible": true
+          },
+          {
+            "name": "consensusParameters",
+            "type": "Microsoft.Common.Section",
+            "label": "Consensus Parameter",
+            "elements": [
+              {
+                "name": "genesisBlockDifficultyMinValue",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Genesis block difficulty minimum value",
+                "toolTip": "",
+                "defaultValue": "16384",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([0-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-8][0-9]{4}|9[0-8][0-9]{3}|99[0-8][0-9]{2}|999[0-8][0-9]|9999[0-9]|[1-8][0-9]{5}|9[0-8][0-9]{4}|99[0-8][0-9]{3}|999[0-8][0-9]{2}|9999[0-8][0-9]|99999[0-9]|[1-8][0-9]{6}|9[0-8][0-9]{5}|99[0-8][0-9]{4}|999[0-8][0-9]{3}|9999[0-8][0-9]{2}|99999[0-8][0-9]|999999[0-9]|[1-8][0-9]{7}|9[0-8][0-9]{6}|99[0-8][0-9]{5}|999[0-8][0-9]{4}|9999[0-8][0-9]{3}|99999[0-8][0-9]{2}|999999[0-8][0-9]|9999999[0-9]|[1-8][0-9]{8}|9[0-8][0-9]{7}|99[0-8][0-9]{6}|999[0-8][0-9]{5}|9999[0-8][0-9]{4}|99999[0-8][0-9]{3}|999999[0-8][0-9]{2}|9999999[0-8][0-9]|99999999[0-9]|[1-8][0-9]{9}|9[0-8][0-9]{8}|99[0-8][0-9]{7}|999[0-8][0-9]{6}|9999[0-8][0-9]{5}|99999[0-8][0-9]{4}|999999[0-8][0-9]{3}|9999999[0-8][0-9]{2}|99999999[0-8][0-9]|999999999[0-9]|1[0-6][0-9]{9}|170[0-9]{8}|171[0-6][0-9]{7}|17170[0-9]{6}|17171[0-3][0-9]{5}|171714[0-7][0-9]{4}|17171480[0-4][0-9]{2}|171714805[0-6][0-9]|1717148057[0-6])$",
+                  "validationMessage": "The difficulty number must be between 0 and 17171480576."
+                },
+                "visible": "[equals('Ethash', steps('BlockchainNetworkConfig').networkConsensus.consensusEngine)]"
+              },
+              {
+                "name": "blockPeriod",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Block period (Seconds)",
+                "toolTip": "",
+                "defaultValue": "5",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([5-9]|1[0-5])$",
+                  "validationMessage": "The CPU cores number must be between 5 and 15."
+                },
+                "visible": "[not(equals('Ethash', steps('BlockchainNetworkConfig').networkConsensus.consensusEngine))]"
+              },
+              {
+                "name": "blockReward",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Block reward (Wei)",
+                "toolTip": "",
+                "defaultValue": "5000000000000000000",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([1-9]000000000000000000|10000000000000000000)$",
+                  "validationMessage": "The difficulty number must be between 1000000000000000000 and 10000000000000000000."
+                },
+                "visible": "[equals('Aura', steps('BlockchainNetworkConfig').networkConsensus.consensusEngine)]"
+              }
+            ]
+          },
+          {
+            "name": "networkNode",
+            "type": "Microsoft.Common.Section",
+            "label": "Network Nodes",
+            "elements": [
+              {
+                "name": "minerCpuCores",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Miner nodes CPU Cores",
+                "toolTip": "The number of CPU cores to allocate to the Miner Service container. Must be an integer.",
+                "defaultValue": "1",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([1-2])$",
+                  "validationMessage": "The CPU cores number must be 1 or 2."
+                }
+              },
+              {
+                "name": "minerMemoryInGb",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Miner nodes Memory (GB)",
+                "toolTip": "The amount of memory to allocate to the Miner Service container in gigabytes.",
+                "defaultValue": "1.5",
+                "constraints": {
+                  "required": true,
+                  "regex": "^(?:3(?:\\.[0-5])?|[2](?:\\.[0-9])?|1?\\.[5-9])$",
+                  "validationMessage": "The amount of memory must be between 1.5 and 3.5 GB."
+                }
+              },
+              {
+                "name": "minerCount",
+                "type": "Microsoft.Common.TextBox",
+                "label": "The number of miner nodes",
+                "toolTip": "The number of miner nodes",
+                "defaultValue": "3",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([1-9]|1[0-9]|20)$",
+                  "validationMessage": "The nodes number must be between 1 and 20."
+                }
+              },
+              {
+                "name": "transactorCount",
+                "type": "Microsoft.Common.TextBox",
+                "label": "The number of transactor nodes",
+                "toolTip": "The number of transactor nodes",
+                "defaultValue": "1",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([0-9]|1[0-9]|20)$",
+                  "validationMessage": "The nodes number must be between 0 and 20."
+                }
+              }
+            ]
+          },
+          {
+            "name": "networkPorts",
+            "type": "Microsoft.Common.Section",
+            "label": "Network Ports",
+            "elements": [
+              {
+                "name": "p2pNetworkPort",
+                "type": "Microsoft.Common.TextBox",
+                "label": "P2P Network service port number",
+                "toolTip": "P2P Network service port number",
+                "defaultValue": "30303",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([2-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                  "validationMessage": "The port number must be between 2000 and 65535."
+                }
+              },
+              {
+                "name": "httpJsonRpcPort",
+                "type": "Microsoft.Common.TextBox",
+                "label": "HTTP JSON-RPC service port number",
+                "toolTip": "HTTP JSON-RPC service port number",
+                "defaultValue": "8545",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([2-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                  "validationMessage": "The port number must be between 2000 and 65535."
+                }
+              },
+              {
+                "name": "websocketJsonRpcPort",
+                "type": "Microsoft.Common.TextBox",
+                "label": "WebSocket JSON-RPC service port number",
+                "toolTip": "WebSocket JSON-RPC service port number",
+                "defaultValue": "8546",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([2-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                  "validationMessage": "The port number must be between 2000 and 65535."
+                }
+              },
+              {
+                "name": "bootnodeServicePort",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Bootnode service port number",
+                "toolTip": "Bootnode service port number",
+                "defaultValue": "3000",
+                "constraints": {
+                  "required": true,
+                  "regex": "^([2-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$",
+                  "validationMessage": "The port number must be between 2000 and 65535."
+                }
+              }
+            ],
+            "visible": true
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "networkName": "[basics('networkName')]",
+      "sealerMasterSeed": "[steps('BlockchainNetworkConfig').networkConsensus.sealerMasterSeed]",
+      "minerCount": "[parse(steps('BlockchainNetworkConfig').networkNode.minerCount)]",
+      "transactorCount": "[parse(steps('BlockchainNetworkConfig').networkNode.transactorCount)]",
+      "consensusEngine": "[steps('BlockchainNetworkConfig').networkConsensus.consensusEngine]",
+      "ethashConsensusParameters": "[steps('BlockchainNetworkConfig').consensusParameters]",
+      "auraConsensusParameters": "[steps('BlockchainNetworkConfig').consensusParameters]",
+      "cliqueConsensusParameters": "[steps('BlockchainNetworkConfig').consensusParameters]",
+      "genesisBlockGasLimits": "0x6422c40",
+      "ethereumServiceImage": "fstnetwork/azure-ethereum-service:preview",
+      "p2pNetworkPort": "[parse(steps('BlockchainNetworkConfig').networkPorts.p2pNetworkPort)]",
+      "httpJsonRpcPort": "[parse(steps('BlockchainNetworkConfig').networkPorts.httpJsonRpcPort)]",
+      "websocketJsonRpcPort": "[parse(steps('BlockchainNetworkConfig').networkPorts.websocketJsonRpcPort)]",
+      "minerCpuCores": "[steps('BlockchainNetworkConfig').networkNode.minerCpuCores]",
+      "minerMemoryInGb": "[steps('BlockchainNetworkConfig').networkNode.minerMemoryInGb]",
+      "bootnodeServiceImage": "fstnetwork/bootnode-registrar:node",
+      "bootnodeServicePort": "[parse(steps('BlockchainNetworkConfig').networkPorts.bootnodeServicePort)]"
+    }
+  }
+}
