@@ -14,7 +14,7 @@ RUN apk add --update --no-cache \
   perl \
   rust
 
-RUN git clone --branch v2.2.7 https://github.com/paritytech/parity-ethereum
+RUN git clone --branch v2.3.3 https://github.com/paritytech/parity-ethereum
 
 WORKDIR /parity-ethereum
 

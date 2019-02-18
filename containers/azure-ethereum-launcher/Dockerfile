@@ -18,7 +18,7 @@ RUN apk add --update --no-cache \
   linux-headers \
   rust
 
-RUN git clone --branch v0.1.0 https://github.com/fstnetwork/azure-ethereum-launcher.git /ethereum-launcher
+RUN git clone --branch v0.1.1 https://github.com/fstnetwork/azure-ethereum-launcher.git /ethereum-launcher
 WORKDIR /ethereum-launcher
 
 # this build step will cache dependencies
